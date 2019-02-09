@@ -28,9 +28,7 @@ echo "Installing dependencies"
 echo "======================================================="
 echo
 
-apt-get -y install git tor #oter dependencies will be installed after with RPI-Wireless-Hotspot
-git clone https://github.com/unixabg/RPI-Wireless-Hotspot.git
-#complite the installation of PI-Wireless-Hotspot
+apt-get -y install tor #oter dependencies will be installed after with installHotspot
 
 clear
 
