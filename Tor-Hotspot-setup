@@ -1,0 +1,88 @@
+#!/bin/bash
+
+#creator of this installer script is Trunks
+
+clear
+
+echo "======================================================="
+echo "=========== Setting up Raspberry TOR router ==========="
+echo "======================================================="
+
+read -r -p "This script will make changes to your system. Do you want continue [y/N] " confirm
+
+if ! [[ $confirm =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+	exit 1
+fi
+
+echo "Updating package lists"
+echo "======================================================="
+echo
+
+apt-get -y update
+
+clear
+
+echo
+echo "Installing dependencies"
+echo "======================================================="
+echo
+
+apt-get -y install git tor #oter dependencies will be installed after with RPI-Wireless-Hotspot
+git clone https://github.com/unixabg/RPI-Wireless-Hotspot.git
+#complite the installation of PI-Wireless-Hotspot
+
+clear
+
+./installHotspot
+
+clear
+
+echo
+echo "Configure the system"
+echo "======================================================="
+echo
+
+#LogPath = /var/log/tor/torLog.log
+
+echo "Log notice file /var/log/tor/torLog.log" >> /etc/tor/torrc
+echo "VirtualAddrNetwork 10.192.0.0/10" >> /etc/tor/torrc 
+echo "AutomapHostsSuffixes .onion,.exit" >> /etc/tor/torrc
+echo "AutomapHostsOnResolve 1" >> /etc/tor/torrc
+echo "TransPort 9040" >> /etc/tor/torrc
+echo "TransListenAddress 192.168.42.1" >> /etc/tor/torrc
+echo "DNSPort 53" >> /etc/tor/torrc
+echo "DNSListenAddress 192.168.42.1" >> /etc/tor/torrc
+
+#######################################
+#crate log file and set the privilege
+touch /var/log/tor/torLog.log
+chown debian-tor /var/log/tor/torLog.log
+chmod 644 /var/log/tor/torLog.log
+######################################
+
+
+iptables -F
+iptables -t nat -F
+iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j REDIRECT --to-ports 53
+iptables -t nat -A PREROUTING -i wlan0 -p tcp --syn -j REDIRECT --to-ports 9040
+iptables -t nat -L
+sh -c "iptables-save > /etc/iptables.ipv4.nat"
+
+#run tor
+echo 
+echo "Run Tor"
+echo "======================================================="
+echo
+
+service tor start
+service tor status
+update-rc.d tor enable
+
+echo 
+echo "Complite"
+echo "======================================================="
+echo
+
+sleep 2
+exit 0
